@@ -21,7 +21,7 @@ func main() {
 
 	r := gin.Default()
 
-	// ✅ Habilitar CORS globalmente
+	// ✅ Habilitar CORS globalment
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // o especifica: []string{"http://98.85.86.231"}
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
