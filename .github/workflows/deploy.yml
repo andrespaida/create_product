@@ -23,22 +23,36 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             echo "📦 Updating Docker environment for create-product..."
 
-            # Detener y eliminar contenedor anterior si existe
+            # Asegurarse de tener Docker instalado
+            if ! command -v docker &> /dev/null; then
+              echo "🔧 Installing Docker..."
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker \$USER
+            fi
+
+            # Detener y eliminar contenedor anterior
             sudo docker stop create-product || true
             sudo docker rm create-product || true
 
-            # Clonar el repo y cambiar a la rama qa
+            # Clonar el repositorio y cambiar a la rama qa
             rm -rf ~/create-product
             git clone https://github.com/andrespaida/create_product.git ~/create-product
             cd ~/create-product
             git checkout qa
 
-            # Construir imagen y correr contenedor
-            sudo docker build -t create-product .
-            sudo docker run -d --name create-product -p 4002:4002 \
-              -e MONGO_URL=mongodb://13.222.75.144:27017 \
-              create-product
+            # Establecer correctamente las variables de entorno necesarias
+            echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
+            echo "DB_NAME=toyshop" >> .env
+            echo "PORT=4002" >> .env
 
-            # Verificación opcional
-            sudo docker ps -a
+            # Compilar y levantar el contenedor
+            sudo docker build -t create-product .
+            sudo docker run -d --name create-product -p 4002:4002 --env-file .env create-product
+
+            # Verificar contenedores activos
+            echo "🟢 Docker containers running:"
+            sudo docker ps
           EOF
