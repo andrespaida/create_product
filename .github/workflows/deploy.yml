@@ -1,0 +1,44 @@
+name: Deploy create-product
+
+on:
+  push:
+    branches:
+      - qa
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > key.pem
+          chmod 400 key.pem
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "📦 Updating Docker environment for create-product..."
+
+            # Detener y eliminar contenedor anterior si existe
+            sudo docker stop create-product || true
+            sudo docker rm create-product || true
+
+            # Clonar el repo y cambiar a la rama qa
+            rm -rf ~/create-product
+            git clone https://github.com/andrespaida/create_product.git ~/create-product
+            cd ~/create-product
+            git checkout qa
+
+            # Construir imagen y correr contenedor
+            sudo docker build -t create-product .
+            sudo docker run -d --name create-product -p 4002:4002 \
+              -e MONGO_URL=mongodb://13.222.75.144:27017 \
+              create-product
+
+            # Verificación opcional
+            sudo docker ps -a
+          EOF
