@@ -4,7 +4,7 @@ FROM golang:1.21
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar archivos de dependencia
 COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
