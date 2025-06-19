@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup SSH key
@@ -18,33 +18,31 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 400 key.pem
 
-      - name: Deploy to EC2
+      - name: SSH into EC2 and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << "EOF"
-            echo "📦 Starting deployment of create-product..."
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
+            echo "🚀 Starting deployment of create-product..."
 
+            # 1. Clonar o actualizar el repositorio
             rm -rf ~/create-product
             git clone https://github.com/andrespaida/create_product.git ~/create-product
             cd ~/create-product
             git checkout qa
 
-            # Crear archivo .env requerido por el contenedor
-            cat <<EOT > .env
-              MONGODB_URI=mongodb://13.222.75.144:27017
-              DB_NAME=toyshop
-              PORT=4002
-          EOT
+            # 2. Crear archivo .env dentro del proyecto
+            echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
+            echo "DB_NAME=toyshop" >> .env
+            echo "PORT=4002" >> .env
 
-            # Detener y eliminar contenedor si ya existe
+            # 3. Eliminar contenedor anterior si existe
             sudo docker stop create-product || true
             sudo docker rm create-product || true
 
-            # Construir imagen desde el directorio correcto
+            # 4. Construir la imagen y correr el contenedor
             sudo docker build -t create-product .
-
-            # Ejecutar contenedor con .env
             sudo docker run -d --name create-product -p 4002:4002 --env-file .env create-product
 
-            echo "✅ Docker containers:"
+            # 5. Mostrar los contenedores activos
+            echo "🟢 Docker containers:"
             sudo docker ps -a
-          EOF
+          '
