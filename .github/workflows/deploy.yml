@@ -31,7 +31,7 @@ jobs:
 
             # 2. Crear archivo .env dentro del proyecto
             echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
-            echo "DB_NAME=toyshop" >> .env
+            echo "DB_NAME=toyshop_db" >> .env
             echo "PORT=4002" >> .env
 
             # 3. Eliminar contenedor anterior si existe
