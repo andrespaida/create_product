@@ -21,23 +21,30 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << "EOF"
-            echo "📦 Updating Docker environment for create-product..."
-
-            sudo docker stop create-product || true
-            sudo docker rm create-product || true
+            echo "📦 Starting deployment of create-product..."
 
             rm -rf ~/create-product
             git clone https://github.com/andrespaida/create_product.git ~/create-product
             cd ~/create-product
             git checkout qa
 
-            echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
-            echo "DB_NAME=toyshop" >> .env
-            echo "PORT=4002" >> .env
+            # Crear archivo .env requerido por el contenedor
+            cat <<EOT > .env
+              MONGODB_URI=mongodb://13.222.75.144:27017
+              DB_NAME=toyshop
+              PORT=4002
+          EOT
 
+            # Detener y eliminar contenedor si ya existe
+            sudo docker stop create-product || true
+            sudo docker rm create-product || true
+
+            # Construir imagen desde el directorio correcto
             sudo docker build -t create-product .
+
+            # Ejecutar contenedor con .env
             sudo docker run -d --name create-product -p 4002:4002 --env-file .env create-product
 
-            echo "🟢 Containers:"
+            echo "✅ Docker containers:"
             sudo docker ps -a
           EOF
