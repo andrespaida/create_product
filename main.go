@@ -21,19 +21,23 @@ func main() {
 
 	r := gin.Default()
 
-	// ✅ Habilitar CORS globalment
+	// ✅ Habilitar CORS globalmente
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // o especifica: []string{"http://98.85.86.231"}
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		AllowCredentials: true,
 	}))
 
+	// ✅ Servir archivos estáticos desde /uploads
+	r.Static("/uploads", "./uploads")
+
+	// ✅ Endpoint para crear productos (con posible imagen)
 	r.POST("/products", handlers.CreateProduct)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "4002" // cambiamos a 4002 como definiste
+		port = "4002"
 	}
 
 	log.Println("🚀 Server running on port", port)
