@@ -23,29 +23,24 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
             echo "🚀 Starting deployment of create-product..."
 
-            # 1. Clonar o actualizar el repositorio
             rm -rf ~/create-product
             git clone https://github.com/andrespaida/create_product.git ~/create-product
             cd ~/create-product
             git checkout qa
 
-            # 2. Crear archivo .env dentro del proyecto
             echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
             echo "DB_NAME=toyshop_db" >> .env
             echo "PORT=4002" >> .env
 
-            # 3. Eliminar contenedor anterior si existe
             sudo docker stop create-product || true
             sudo docker rm create-product || true
 
-            # 4. Construir la imagen y correr el contenedor con política de reinicio
             sudo docker build -t create-product .
             sudo docker run -d --name create-product -p 4002:4002 \
               --restart=always \
               --env-file .env \
               create-product
 
-            # 5. Mostrar los contenedores activos
             echo "🟢 Docker containers:"
             sudo docker ps -a
           '
