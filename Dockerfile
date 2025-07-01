@@ -8,7 +8,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o main .
+# 🔧 Desactiva VCS stamping para evitar el error
+RUN go build -buildvcs=false -o main .
 
 EXPOSE 4002
 
