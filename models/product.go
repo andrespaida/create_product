@@ -4,15 +4,16 @@ import (
 	"context"
 	"os"
 	"time"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Product struct {
-	Name        string  json:"name" bson:"name"
-	Description string  json:"description" bson:"description"
-	Price       float64 json:"price" bson:"price"
-	Stock       int     json:"stock" bson:"stock"
+	Name        string  `json:"name" bson:"name"`
+	Description string  `json:"description" bson:"description"`
+	Price       float64 `json:"price" bson:"price"`
+	Stock       int     `json:"stock" bson:"stock"`
 }
 
 var client *mongo.Client
