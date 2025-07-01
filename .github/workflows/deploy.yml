@@ -23,19 +23,26 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
             echo "🚀 Starting deployment of create-product..."
 
+            # Limpiar y clonar repo
             rm -rf ~/create-product
             git clone https://github.com/andrespaida/create_product.git ~/create-product
             cd ~/create-product
             git checkout qa
 
+            # Configurar variables de entorno
             echo "MONGODB_URI=mongodb://52.21.72.12:27017" > .env
             echo "DB_NAME=toyshop_db" >> .env
             echo "PORT=4002" >> .env
 
+            # Eliminar contenedor anterior si existe
             sudo docker stop create-product || true
             sudo docker rm create-product || true
 
+            # Construir imagen desde el directorio correcto
             sudo docker build -t create-product .
+            echo "✅ Docker image built successfully."
+
+            # Ejecutar contenedor
             sudo docker run -d --name create-product -p 4002:4002 \
               --restart=always \
               --env-file .env \
