@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
-# Copiar archivo .env si lo usas localmente (opcional)
+# Copiar archivo .env si lo usas localmente (opcional).
 # COPY .env .
 
 EXPOSE 4002
