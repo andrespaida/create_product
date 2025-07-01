@@ -8,11 +8,8 @@ RUN go mod download
 
 COPY . .
 
-# Compila el binario correctamente
-RUN go build -o create_product .
+RUN go build -buildvcs=false -o create_product .
 
-# Expone el puerto usado en tu .env
 EXPOSE 4002
 
-# Ejecuta el binario al arrancar el contenedor
 CMD ["./create_product"]
