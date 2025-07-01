@@ -1,6 +1,6 @@
 # Create Product Microservice
 
-This microservice allows adding new products to the ToyShop platform. It is part of the product management domain and stores product data in MongoDB. Images can be uploaded and are stored in a local folder.
+This microservice allows adding new products to the ToyShop platform. It is part of the product management domain and stores product data in MongoDB. Images can be uploaded and are stored in a local folder..
 
 ## Technologies Used
 
