@@ -28,7 +28,7 @@ jobs:
             cd ~/create-product
             git checkout qa
 
-            echo "MONGODB_URI=mongodb://13.222.75.144:27017" > .env
+            echo "MONGODB_URI=mongodb://52.21.72.12:27017" > .env
             echo "DB_NAME=toyshop_db" >> .env
             echo "PORT=4002" >> .env
 
