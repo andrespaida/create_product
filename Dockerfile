@@ -8,9 +8,10 @@ RUN go mod download
 
 COPY . .
 
-# 🔧 Desactiva VCS stamping para evitar el error
-RUN go build -buildvcs=false -o main .
+# ✅ Evita el error VCS y compila durante build, no en CMD
+RUN go build -buildvcs=false -o create_product .
 
 EXPOSE 4002
 
-CMD ["./main"]
+# ✅ Ejecuta el binario directamente
+CMD ["./create_product"]
