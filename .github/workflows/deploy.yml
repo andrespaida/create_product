@@ -1,4 +1,4 @@
-name: Deploy create-product
+name: Build and Deploy create-product to EC2 from QA
 
 on:
   push:
@@ -6,41 +6,69 @@ on:
       - qa
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_TAG: qa
+
     steps:
-      - name: Checkout code
+      # Checkout source code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Login to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # Build the Docker image with qa tag
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/create-product:${{ env.IMAGE_TAG }} .
+
+      # Push the image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/create-product:${{ env.IMAGE_TAG }}
+
+      # Prepare SSH key
       - name: Setup SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 400 key.pem
 
-      - name: SSH into EC2 and deploy
+      # SSH into EC2 and deploy the container from Docker Hub
+      - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
-            echo "🚀 Starting deployment of create-product..."
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            set -e
 
-            rm -rf ~/create-product
-            git clone https://github.com/andrespaida/create_product.git ~/create-product
-            cd ~/create-product
-            git checkout qa
+            echo "📦 Deploying create-product using Docker Hub image (qa)..."
 
-            echo "MONGODB_URI=mongodb://52.21.72.12:27017" > .env
-            echo "DB_NAME=toyshop_db" >> .env
-            echo "PORT=4002" >> .env
+            # Install Docker if necessary
+            if ! command -v docker &> /dev/null; then
+              echo "🛠 Installing Docker..."
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+            else
+              echo "✅ Docker is already installed."
+            fi
 
-            sudo docker stop create-product || true
-            sudo docker rm create-product || true
+            # Stop and remove old container if it exists
+            sudo docker rm -f create-product || true
 
-            sudo docker build -t create-product .
-            sudo docker run -d --name create-product -p 4002:4002 \
-              --restart=always \
-              --env-file .env \
-              create-product
+            # Pull the latest image from Docker Hub
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/create-product:${{ env.IMAGE_TAG }}
 
-            echo "🟢 Docker containers:"
+            # Run the new container
+            sudo docker run -d --name create-product \
+              -p 4002:4002 \
+              --restart always \
+              -e MONGODB_URI=mongodb://52.21.72.12:27017 \
+              -e DB_NAME=toyshop_db \
+              -e PORT=4002 \
+              ${{ secrets.DOCKER_USERNAME }}/create-product:${{ env.IMAGE_TAG }}
+
+            echo "✅ create-product deployed successfully (qa)"
             sudo docker ps -a
-          '
+          EOF
